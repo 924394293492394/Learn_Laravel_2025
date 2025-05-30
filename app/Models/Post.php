@@ -9,12 +9,8 @@ class Post extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'title',
-        'content',
-        'category_id',
-        'image',
-    ];
+    protected $fillable = ['title', 'content', 'category_id', 'image', 'image_url'];
+
 
     public function user()
     {
@@ -34,5 +30,10 @@ class Post extends Model
     public function tags()
     {
         return $this->belongsToMany(Tag::class);
+    }
+
+    public function media()
+    {
+        return $this->hasMany(Media::class);
     }
 }

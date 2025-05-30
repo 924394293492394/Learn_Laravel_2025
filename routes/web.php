@@ -10,6 +10,11 @@ Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::get('/post/{slug}', [PageController::class, 'showPost'])->name('post.show');
 Route::resource('posts', PostController::class);
 Route::get('posts/{post}', [PostController::class, 'show'])->name('posts.show');
+Route::delete('/posts/media/{media}', [PostController::class, 'destroyFile'])->name('posts.deleteFile');
+
+
+Route::get('/posts/create', [PostController::class, 'create'])->name('posts.create');
+Route::post('/posts/store', [PostController::class, 'store'])->name('posts.store');
 
 // Route::get('/', function () {
 //     return view('welcome');

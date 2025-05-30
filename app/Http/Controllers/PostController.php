@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Tag;
 use App\Models\Post;
 use App\Models\Category;
+use App\Models\Media;
 use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
@@ -44,40 +45,39 @@ class PostController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+
     public function store(Request $request)
     {
-        app()->setLocale('ru');
-        // Валидация
         $validated = $request->validate([
-            'title' => 'required|max:255|unique:posts,title',
-            'content' => 'required|min:50',
+            'title' => 'required|max:255',
+            'content' => 'required|min:10',
             'category_id' => 'required|exists:categories,id',
-            'tags' => 'array|exists:tags,id',
-            'image' => 'nullable|image|max:2048',
+            'image_url' => 'nullable|url',
         ]);
 
-        $post = Post::create($validated);
+        // Указываем, что пост принадлежит текущему пользователю
+        $post = Post::create([
+            'title' => $validated['title'],
+            'content' => $validated['content'],
+            'category_id' => $validated['category_id'],
+            'image_url' => $validated['image_url'] ?? null,
+            'user_id' => auth()->id(), // Добавляем ID авторизованного пользователя
+        ]);
 
-        // Привязка тегов
-        $post->tags()->sync($request->tags);
-
-        // Загрузка изображения
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('posts', 'public');
-            $post->update(['image' => $path]);
-        }
-
-        return redirect()->route('posts.index')->with('success', 'Пост создан!');
+        return redirect()->route('posts.index')->with('success', 'Пост успешно создан!');
     }
+
+
 
     /**
      * Display the specified resource.
      */
     public function show(string $id)
     {
-        $post = Post::with(['category', 'tags', 'comments'])->findOrFail($id);
+        $post = Post::with(['category', 'tags', 'comments', 'media'])->findOrFail($id);
         return view('posts.show', compact('post'));
     }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -138,5 +138,12 @@ class PostController extends Controller
     {
         $post->delete();
         return redirect()->route('posts.index')->with('success', 'Пост удален!');
+    }
+
+    public function destroyFile(Media $media)
+    {
+        Storage::disk('s3-fake')->delete($media->path);
+        $media->delete();
+        return back()->with('success', 'Файл удалён!');
     }
 }
